@@ -1,4 +1,4 @@
- 1. git clone https://github.com/gowthamand/django-crud-ajax-login-register-fileupload
+ 1. git clone https://github.com/setiapam/crud-django
 
  2. Change crud/settings.py MYSQL CONFIGURATIONS (name, user, password)
 
