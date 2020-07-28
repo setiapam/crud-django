@@ -1,0 +1,181 @@
+<script>
+    $(document).ready(function () {
+        show_data();
+
+        function show_data() {
+            $('#myTable').DataTable({
+                "sDom": 'lrtip',
+                "aoColumnDefs": [
+                    {"bSortable": false, "aTargets": [0, 1, 2, 3]},
+                    {"bSearchable": true, "aTargets": [1, 2]}
+                ],
+                "processing": true,
+                "serverSide": true,
+                "ajax": "{% url 'mainTableData' %}",
+                "columns": [
+                    {
+                        data: 'photo',
+                        render: function (datum, type, row) {
+                            return '<a target="_blank" href="/media/' + datum + '" data-lightbox="majalah"><img style="height:200px; width:200px;" src="/media/' + datum + '"></a>';
+                        }
+                    },
+                    {"data": "name"},
+                    {"data": "email"},
+                    {
+                        data: 'id',
+                        render: function (datum, type, row) {
+                            return '<button type ="button" class="btn btn-primary" data-toggle="modal" data-target="#updateUserModal"\n' +
+                                'data-whatever="' + datum + '">Update</button> <button type ="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteUserModal"\n' +
+                                'data-whatever="' + datum + '">Delete</button>';
+                        }
+                    }
+                ]
+            });
+        }
+
+        $('#updateUserModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget)
+            var id = button.data('whatever')
+            var modal = $(this)
+            var url_mask = "{% url 'update_user' 12345 %}".replace(/12345/, id.toString());
+            $.ajax({
+                type: "GET",
+                url: url_mask,
+                success: function (response) {
+                    modal.find('#hidden_id').remove();
+                    modal.find('.modal-body').html(response);
+                    modal.find('.modal-body').append('{% csrf_token %}');
+                    modal.find('.modal-body').append('<input type="hidden" id="hidden_id" value="' + id + '">');
+                },
+                failure: function () {
+                    console.log('error')
+                }
+            });
+        })
+
+        $('#deleteUserModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget)
+            var id = button.data('whatever')
+            var modal = $(this)
+            modal.find('#hidden_id_2').remove();
+            modal.find('.modal-header').append('<input type="hidden" id="hidden_id_2" value="' + id + '">');
+        })
+
+        $('#add_user').submit(function (e) {
+            e.preventDefault();
+            var serializedData = new FormData(this.form);
+            serializedData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            serializedData.append('name', $('#id_name').val());
+            serializedData.append('email', $('#id_email').val());
+            serializedData.append('password', $('#id_password').val());
+            serializedData.append('photo', $('#id_photo')[0].files[0])
+            $.ajax({
+                type: "POST",
+                url: "{% url 'add_user' %}",
+                data: serializedData,
+                processData: false,
+                contentType: false,
+                success: function (data) {
+                    if (data.error === true) {
+                        alert(data.msg.email[0]);
+                    } else {
+                        $('#add_user').trigger("reset");
+                        $('#addUserModal').modal("hide");
+                        alert('User added successfully');
+                        $("#myTable").dataTable().fnDestroy();
+                        show_data();
+                        console.log(data.msg)
+                    }
+                },
+                failure: function () {
+                    console.log('error')
+                }
+            });
+        });
+
+        $('#update_user').submit(function (e) {
+            e.preventDefault();
+            var id = $('#update_user #hidden_id').val();
+            var serializedData = new FormData(this.form);
+            serializedData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            serializedData.append('name', $('#update_user #id_name').val());
+            serializedData.append('email', $('#update_user #id_email').val());
+            serializedData.append('password', $('#update_user #id_password').val());
+            serializedData.append('photo', $('#update_user #id_photo')[0].files[0]);
+            var url_mask = "{% url 'update_user' 12345 %}".replace(/12345/, id.toString());
+            $.ajax({
+                type: "POST",
+                url: url_mask,
+                data: serializedData,
+                processData: false,
+                contentType: false,
+                success: function (data) {
+                    if (data.error === true) {
+                        alert(data.msg.email[0]);
+                    } else {
+                        $('#update_user').trigger("reset");
+                        $('#updateUserModal').modal("hide");
+                        alert('User updated successfully');
+                        $("#myTable").dataTable().fnDestroy();
+                        show_data();
+                    }
+                },
+                failure: function () {
+                    console.log('error')
+                }
+            });
+        });
+
+        $('#login_user').submit(function (e) {
+            e.preventDefault();
+            var serializedData = new FormData(this.form);
+            serializedData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            serializedData.append('email', $('#login_user #id_email').val());
+            serializedData.append('password', $('#login_user #id_password').val());
+            $.ajax({
+                type: "POST",
+                url: "{% url 'login' %}",
+                data: serializedData,
+                processData: false,
+                contentType: false,
+                success: function (data) {
+                    if (data.error === true) {
+                        alert(data.msg);
+                    } else {
+                        console.log(data.url)
+                        window.location.href = data.url;
+                    }
+                },
+                failure: function () {
+                    console.log('error')
+                }
+            });
+        });
+
+        $('#deleteButton').click(function (e) {
+            e.preventDefault();
+            var id = $('#deleteUserModal #hidden_id_2').val();
+            var url_mask = "{% url 'delete_user' 12345 %}".replace(/12345/, id.toString());
+            $.ajax({
+                type: "POST",
+                url: url_mask,
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function (data) {
+                    if (data.error == true) {
+                        alert(data.msg);
+                    } else {
+                        $('#deleteUserModal').modal("hide");
+                        alert('User deleted successfully');
+                        $("#myTable").dataTable().fnDestroy();
+                        show_data();
+                    }
+                },
+                failure: function () {
+                    console.log('error')
+                }
+            });
+        })
+    });
+</script>

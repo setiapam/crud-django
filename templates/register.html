@@ -1,0 +1,29 @@
+{% extends 'main.html' %}
+{% block content %}
+    <link rel="stylesheet" href="https://getbootstrap.com/docs/4.0/examples/sign-in/signin.css">
+    <section>
+        <div class="container">
+            <form id="add_user" enctype="multipart/form-data" class="form-signin">
+                <h1 class="h3 mb-3 font-weight-normal text-center">CRUD Website</h1>
+                {% csrf_token %}
+                {{ form.name.errors }}
+                <label for="{{ form.name.id_for_label }}" class="col-form-label">Name:</label>
+                {{ form.name }}
+                {{ form.email.errors }}
+                <label for="{{ form.email.id_for_label }}" class="col-form-label">Email:</label>
+                {{ form.email }}
+                {{ form.password.errors }}
+                <label for="{{ form.password.id_for_label }}" class="col-form-label">Password:</label>
+                {{ form.password }}
+                {{ form.photo.errors }}
+                <label for="{{ form.photo.id_for_label }}" class="col-form-label">Photo Profile:</label>
+                {{ form.photo }}
+                <br>
+                <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+                <div class=" text-center">
+                    <input type="submit" name="submit" value="Register" class="btn btn-primary">
+                </div>
+            </form>
+        </div>
+    </section>
+{% endblock content %}
